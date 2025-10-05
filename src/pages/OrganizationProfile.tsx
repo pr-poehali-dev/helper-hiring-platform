@@ -1,16 +1,21 @@
+import { useState } from 'react';
 import { ArrowLeft, Briefcase, DollarSign, FileText, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
 import Icon from '@/components/ui/icon';
 
 interface OrganizationProfileProps {
   profileData: any;
   onBack: () => void;
+  onUpdateProfile: (data: any) => void;
 }
 
-const OrganizationProfile = ({ profileData, onBack }: OrganizationProfileProps) => {
+const OrganizationProfile = ({ profileData, onBack, onUpdateProfile }: OrganizationProfileProps) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState(profileData || {});
   const stats = {
     totalEarnings: 850000,
     activeJobs: 12,
@@ -25,10 +30,18 @@ const OrganizationProfile = ({ profileData, onBack }: OrganizationProfileProps) 
   ];
 
   const applications = [
-    { id: 1, client: 'ООО "Техно"', task: 'Уборка офиса 200м²', status: 'Новая', date: '10 окт 2024' },
-    { id: 2, client: 'Петров И.', task: 'Генеральная уборка 3к квартиры', status: 'В работе', date: '9 окт 2024' },
-    { id: 3, client: 'ТЦ "Европа"', task: 'Ежедневная уборка', status: 'Новая', date: '8 окт 2024' }
+    { id: 1, client: 'ООО "Техно"', task: 'Уборка офиса 200м²', status: 'Новая', date: '10 окт 2024', price: '15000₽' },
+    { id: 2, client: 'ТЦ "Европа"', task: 'Ежедневная уборка', status: 'Новая', date: '8 окт 2024', price: '25000₽' }
   ];
+
+  const myOrders = [
+    { id: 1, client: 'Петров И.', task: 'Генеральная уборка 3к квартиры', status: 'В работе', date: '9 окт 2024', price: '8000₽' }
+  ];
+
+  const handleSaveProfile = () => {
+    onUpdateProfile(editData);
+    setIsEditing(false);
+  };
 
   return (
     <div className="min-h-screen bg-background py-8">
@@ -51,7 +64,14 @@ const OrganizationProfile = ({ profileData, onBack }: OrganizationProfileProps) 
                     <CardDescription className="text-lg">{profileData?.type || 'Клининговые услуги'}</CardDescription>
                   </div>
                 </div>
-                <Button>Редактировать профиль</Button>
+                {isEditing ? (
+                  <div className="flex gap-2">
+                    <Button onClick={handleSaveProfile}>Сохранить</Button>
+                    <Button variant="outline" onClick={() => setIsEditing(false)}>Отмена</Button>
+                  </div>
+                ) : (
+                  <Button onClick={() => setIsEditing(true)}>Редактировать профиль</Button>
+                )}
               </div>
             </CardHeader>
             <CardContent>
@@ -97,9 +117,10 @@ const OrganizationProfile = ({ profileData, onBack }: OrganizationProfileProps) 
           </Card>
 
           <Tabs defaultValue="ads" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="ads">Наши объявления</TabsTrigger>
               <TabsTrigger value="applications">Заявки</TabsTrigger>
+              <TabsTrigger value="orders">Мои заказы</TabsTrigger>
               <TabsTrigger value="data">Данные организации</TabsTrigger>
             </TabsList>
 
@@ -136,13 +157,14 @@ const OrganizationProfile = ({ profileData, onBack }: OrganizationProfileProps) 
 
             <TabsContent value="applications" className="mt-6 space-y-4">
               <h3 className="text-xl font-semibold mb-4">Заявки от клиентов</h3>
+              <p className="text-sm text-muted-foreground mb-4">Заявки, отправленные вам клиентами. Примите или отклоните их.</p>
               {applications.map((app) => (
                 <Card key={app.id}>
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div>
                         <CardTitle>{app.task}</CardTitle>
-                        <CardDescription>Клиент: {app.client} • {app.date}</CardDescription>
+                        <CardDescription>Клиент: {app.client} • {app.date} • {app.price}</CardDescription>
                       </div>
                       <Badge variant={app.status === 'Новая' ? 'default' : 'secondary'}>
                         {app.status}
@@ -151,8 +173,32 @@ const OrganizationProfile = ({ profileData, onBack }: OrganizationProfileProps) 
                   </CardHeader>
                   <CardContent>
                     <div className="flex gap-2">
-                      <Button size="sm">Принять</Button>
+                      <Button size="sm">Взять в работу</Button>
                       <Button size="sm" variant="outline">Отклонить</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </TabsContent>
+
+            <TabsContent value="orders" className="mt-6 space-y-4">
+              <h3 className="text-xl font-semibold mb-4">Мои заказы</h3>
+              <p className="text-sm text-muted-foreground mb-4">Заявки, которые вы приняли в работу</p>
+              {myOrders.map((order) => (
+                <Card key={order.id}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle>{order.task}</CardTitle>
+                        <CardDescription>Клиент: {order.client} • {order.date} • {order.price}</CardDescription>
+                      </div>
+                      <Badge variant="secondary">{order.status}</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex gap-2">
+                      <Button size="sm">Связаться с клиентом</Button>
+                      <Button size="sm" variant="outline">Завершить</Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -165,22 +211,58 @@ const OrganizationProfile = ({ profileData, onBack }: OrganizationProfileProps) 
                   <CardTitle>Данные организации</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Название</p>
-                    <p className="text-lg font-medium">{profileData?.name || 'Чистый дом'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Тип услуг</p>
-                    <p className="text-lg font-medium">{profileData?.type || 'Клининговые услуги'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Количество сотрудников</p>
-                    <p className="text-lg font-medium">{profileData?.workers || 25}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Контактный телефон</p>
-                    <p className="text-lg font-medium">{profileData?.phone || '+7 (495) 123-45-67'}</p>
-                  </div>
+                  {isEditing ? (
+                    <>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Название</label>
+                        <Input 
+                          value={editData?.name || ''} 
+                          onChange={(e) => setEditData({...editData, name: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Тип услуг</label>
+                        <Input 
+                          value={editData?.type || ''} 
+                          onChange={(e) => setEditData({...editData, type: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Количество сотрудников</label>
+                        <Input 
+                          type="number"
+                          value={editData?.workers || ''} 
+                          onChange={(e) => setEditData({...editData, workers: parseInt(e.target.value)})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Контактный телефон</label>
+                        <Input 
+                          value={editData?.phone || ''} 
+                          onChange={(e) => setEditData({...editData, phone: e.target.value})}
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Название</p>
+                        <p className="text-lg font-medium">{profileData?.name || 'Чистый дом'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Тип услуг</p>
+                        <p className="text-lg font-medium">{profileData?.type || 'Клининговые услуги'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Количество сотрудников</p>
+                        <p className="text-lg font-medium">{profileData?.workers || 25}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Контактный телефон</p>
+                        <p className="text-lg font-medium">{profileData?.phone || '+7 (495) 123-45-67'}</p>
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

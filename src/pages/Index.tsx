@@ -186,7 +186,7 @@ const Index = () => {
 
             <section>
               <h3 className="text-2xl font-semibold mb-6">Популярные категории</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
                 {categories.map((category, index) => (
                   <Card key={index} className="cursor-pointer hover:shadow-lg transition-all hover:scale-105">
                     <CardContent className="flex flex-col items-center justify-center p-6 space-y-2">
@@ -429,7 +429,7 @@ const Index = () => {
           </div>
         )}
 
-        {activeTab === 'orders' && (
+        {activeTab === 'orders' && !isRegistered && (
           <div className="max-w-4xl mx-auto space-y-6">
             <h2 className="text-3xl font-bold">Мои заказы</h2>
             
@@ -513,12 +513,14 @@ const Index = () => {
             {userType === 'worker' ? (
               <WorkerProfile 
                 profileData={profileData} 
-                onBack={() => setActiveTab('home')} 
+                onBack={() => setActiveTab('home')}
+                onUpdateProfile={(data) => setProfileData(data)}
               />
             ) : (
               <OrganizationProfile 
                 profileData={profileData} 
-                onBack={() => setActiveTab('home')} 
+                onBack={() => setActiveTab('home')}
+                onUpdateProfile={(data) => setProfileData(data)}
               />
             )}
           </>
