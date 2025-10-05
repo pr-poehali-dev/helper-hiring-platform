@@ -19,6 +19,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [sortBy, setSortBy] = useState<'rating' | 'price-asc' | 'price-desc' | null>(null);
 
   useEffect(() => {
     if (isDark) {
@@ -153,7 +154,27 @@ const Index = () => {
     setActiveTab('search');
   };
 
-  const filteredExecutors = allExecutors.filter(executor => {
+  const parsePrice = (priceStr: string) => {
+    const match = priceStr.match(/(\d+)/);
+    return match ? parseInt(match[1]) : 0;
+  };
+
+  const sortExecutors = (executors: any[]) => {
+    if (!sortBy) return executors;
+    
+    return [...executors].sort((a, b) => {
+      if (sortBy === 'rating') {
+        return b.rating - a.rating;
+      } else if (sortBy === 'price-asc') {
+        return parsePrice(a.price) - parsePrice(b.price);
+      } else if (sortBy === 'price-desc') {
+        return parsePrice(b.price) - parsePrice(a.price);
+      }
+      return 0;
+    });
+  };
+
+  const filteredExecutors = sortExecutors(allExecutors.filter(executor => {
     const matchesSearch = searchQuery === '' || 
       executor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (executor.type ? executor.type.toLowerCase().includes(searchQuery.toLowerCase()) : false) ||
@@ -162,7 +183,7 @@ const Index = () => {
     const matchesCategory = !selectedCategory || executor.category === selectedCategory;
     
     return matchesSearch && matchesCategory;
-  });
+  }));
 
   return (
     <div className="min-h-screen bg-background transition-colors duration-300">
@@ -305,7 +326,7 @@ const Index = () => {
 
         {activeTab === 'search' && (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-start justify-between mb-4">
               <div>
                 <h2 className="text-3xl font-bold">Результаты поиска</h2>
                 {selectedCategory && (
@@ -322,7 +343,32 @@ const Index = () => {
                   </p>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground">Найдено: {filteredExecutors.length}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-muted-foreground mr-2">Найдено: {filteredExecutors.length}</p>
+                <div className="flex gap-2">
+                  <Button 
+                    variant={sortBy === 'rating' ? 'default' : 'outline'} 
+                    size="sm"
+                    onClick={() => setSortBy(sortBy === 'rating' ? null : 'rating')}
+                  >
+                    По рейтингу
+                  </Button>
+                  <Button 
+                    variant={sortBy === 'price-asc' ? 'default' : 'outline'} 
+                    size="sm"
+                    onClick={() => setSortBy(sortBy === 'price-asc' ? null : 'price-asc')}
+                  >
+                    Цена ↑
+                  </Button>
+                  <Button 
+                    variant={sortBy === 'price-desc' ? 'default' : 'outline'} 
+                    size="sm"
+                    onClick={() => setSortBy(sortBy === 'price-desc' ? null : 'price-desc')}
+                  >
+                    Цена ↓
+                  </Button>
+                </div>
+              </div>
             </div>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -372,7 +418,32 @@ const Index = () => {
         {activeTab === 'workers' && (
           <div className="space-y-6">
             <div className="flex flex-col gap-4 mb-6">
-              <h2 className="text-3xl font-bold">Каталог рабочих</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-3xl font-bold">Каталог рабочих</h2>
+                <div className="flex gap-2">
+                  <Button 
+                    variant={sortBy === 'rating' ? 'default' : 'outline'} 
+                    size="sm"
+                    onClick={() => setSortBy(sortBy === 'rating' ? null : 'rating')}
+                  >
+                    По рейтингу
+                  </Button>
+                  <Button 
+                    variant={sortBy === 'price-asc' ? 'default' : 'outline'} 
+                    size="sm"
+                    onClick={() => setSortBy(sortBy === 'price-asc' ? null : 'price-asc')}
+                  >
+                    Цена ↑
+                  </Button>
+                  <Button 
+                    variant={sortBy === 'price-desc' ? 'default' : 'outline'} 
+                    size="sm"
+                    onClick={() => setSortBy(sortBy === 'price-desc' ? null : 'price-desc')}
+                  >
+                    Цена ↓
+                  </Button>
+                </div>
+              </div>
               <div className="flex flex-wrap gap-2">
                 <Button 
                   variant={selectedCategory === null ? 'default' : 'outline'} 
@@ -395,7 +466,7 @@ const Index = () => {
             </div>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {workers.filter(w => !selectedCategory || w.category === selectedCategory).map((worker) => (
+              {sortExecutors(workers.filter(w => !selectedCategory || w.category === selectedCategory)).map((worker) => (
                 <Card key={worker.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-start gap-3">
@@ -428,7 +499,32 @@ const Index = () => {
         {activeTab === 'organizations' && (
           <div className="space-y-6">
             <div className="flex flex-col gap-4 mb-6">
-              <h2 className="text-3xl font-bold">Каталог организаций</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-3xl font-bold">Каталог организаций</h2>
+                <div className="flex gap-2">
+                  <Button 
+                    variant={sortBy === 'rating' ? 'default' : 'outline'} 
+                    size="sm"
+                    onClick={() => setSortBy(sortBy === 'rating' ? null : 'rating')}
+                  >
+                    По рейтингу
+                  </Button>
+                  <Button 
+                    variant={sortBy === 'price-asc' ? 'default' : 'outline'} 
+                    size="sm"
+                    onClick={() => setSortBy(sortBy === 'price-asc' ? null : 'price-asc')}
+                  >
+                    Цена ↑
+                  </Button>
+                  <Button 
+                    variant={sortBy === 'price-desc' ? 'default' : 'outline'} 
+                    size="sm"
+                    onClick={() => setSortBy(sortBy === 'price-desc' ? null : 'price-desc')}
+                  >
+                    Цена ↓
+                  </Button>
+                </div>
+              </div>
               <div className="flex flex-wrap gap-2">
                 <Button 
                   variant={selectedCategory === null ? 'default' : 'outline'} 
@@ -451,7 +547,7 @@ const Index = () => {
             </div>
             
             <div className="grid md:grid-cols-2 gap-6">
-              {organizations.filter(o => !selectedCategory || o.category === selectedCategory).map((org) => (
+              {sortExecutors(organizations.filter(o => !selectedCategory || o.category === selectedCategory)).map((org) => (
                 <Card key={org.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-start justify-between">
