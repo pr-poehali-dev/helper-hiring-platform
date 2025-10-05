@@ -16,6 +16,9 @@ const Index = () => {
   const [userType, setUserType] = useState<'worker' | 'organization' | null>(null);
   const [isRegistered, setIsRegistered] = useState(false);
   const [profileData, setProfileData] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
   useEffect(() => {
     if (isDark) {
@@ -33,7 +36,9 @@ const Index = () => {
       rating: 4.8,
       reviews: 127,
       price: '2500₽/час',
-      image: '👨‍🔧'
+      image: '👨‍🔧',
+      type: 'worker',
+      category: 'Сантехника'
     },
     {
       id: 2,
@@ -42,7 +47,9 @@ const Index = () => {
       rating: 4.9,
       reviews: 215,
       price: '1800₽/час',
-      image: '👩‍💼'
+      image: '👩‍💼',
+      type: 'worker',
+      category: 'Уборка'
     },
     {
       id: 3,
@@ -51,7 +58,20 @@ const Index = () => {
       rating: 4.7,
       reviews: 89,
       price: '2000₽/час',
-      image: '💪'
+      image: '💪',
+      type: 'worker',
+      category: 'Переезды'
+    },
+    {
+      id: 4,
+      name: 'Иван Строитель',
+      specialty: 'Строительство, ремонт',
+      rating: 4.9,
+      reviews: 156,
+      price: '3000₽/час',
+      image: '👷',
+      type: 'worker',
+      category: 'Строительство'
     }
   ];
 
@@ -62,7 +82,9 @@ const Index = () => {
       type: 'Универсальные услуги',
       workers: 45,
       rating: 4.8,
-      price: 'от 2000₽/час'
+      price: 'от 2000₽/час',
+      executorType: 'organization',
+      category: 'Ремонт'
     },
     {
       id: 2,
@@ -70,7 +92,19 @@ const Index = () => {
       type: 'Клининговые услуги',
       workers: 32,
       rating: 4.9,
-      price: 'от 1500₽/час'
+      price: 'от 1500₽/час',
+      executorType: 'organization',
+      category: 'Уборка'
+    },
+    {
+      id: 3,
+      name: 'СтройПро',
+      type: 'Строительные работы',
+      workers: 58,
+      rating: 4.7,
+      price: 'от 3500₽/час',
+      executorType: 'organization',
+      category: 'Строительство'
     }
   ];
 
@@ -103,6 +137,33 @@ const Index = () => {
     }
   ];
 
+  const allExecutors = [
+    ...workers.map(w => ({ ...w, executorType: 'worker' as const })),
+    ...organizations
+  ];
+
+  const handleSearch = () => {
+    setShowSearchResults(true);
+    setActiveTab('search');
+  };
+
+  const handleCategoryClick = (categoryName: string) => {
+    setSelectedCategory(categoryName);
+    setShowSearchResults(true);
+    setActiveTab('search');
+  };
+
+  const filteredExecutors = allExecutors.filter(executor => {
+    const matchesSearch = searchQuery === '' || 
+      executor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (executor.type ? executor.type.toLowerCase().includes(searchQuery.toLowerCase()) : false) ||
+      (executor.specialty ? executor.specialty.toLowerCase().includes(searchQuery.toLowerCase()) : false);
+    
+    const matchesCategory = !selectedCategory || executor.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
+
   return (
     <div className="min-h-screen bg-background transition-colors duration-300">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -125,9 +186,6 @@ const Index = () => {
               </button>
               <button onClick={() => setActiveTab('register')} className={`text-sm font-medium transition-colors hover:text-primary ${activeTab === 'register' ? 'text-primary' : 'text-muted-foreground'}`}>
                 Стать исполнителем
-              </button>
-              <button onClick={() => setActiveTab('orders')} className={`text-sm font-medium transition-colors hover:text-primary ${activeTab === 'orders' ? 'text-primary' : 'text-muted-foreground'}`}>
-                Мои заказы
               </button>
               <button onClick={() => setActiveTab('faq')} className={`text-sm font-medium transition-colors hover:text-primary ${activeTab === 'faq' ? 'text-primary' : 'text-muted-foreground'}`}>
                 FAQ
@@ -176,9 +234,16 @@ const Index = () => {
                   <Input
                     placeholder="Поиск услуг: сантехник, уборка, грузчик..."
                     className="pl-10 h-12"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSearch();
+                      }
+                    }}
                   />
                 </div>
-                <Button size="lg" className="h-12 px-8">
+                <Button size="lg" className="h-12 px-8" onClick={handleSearch}>
                   Найти
                 </Button>
               </div>
@@ -188,7 +253,11 @@ const Index = () => {
               <h3 className="text-2xl font-semibold mb-6">Популярные категории</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
                 {categories.map((category, index) => (
-                  <Card key={index} className="cursor-pointer hover:shadow-lg transition-all hover:scale-105">
+                  <Card 
+                    key={index} 
+                    className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
+                    onClick={() => handleCategoryClick(category.name)}
+                  >
                     <CardContent className="flex flex-col items-center justify-center p-6 space-y-2">
                       <span className="text-4xl">{category.icon}</span>
                       <p className="text-sm font-medium text-center">{category.name}</p>
@@ -234,18 +303,99 @@ const Index = () => {
           </div>
         )}
 
-        {activeTab === 'workers' && (
+        {activeTab === 'search' && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-3xl font-bold">Результаты поиска</h2>
+                {selectedCategory && (
+                  <p className="text-muted-foreground mt-2">
+                    Категория: {selectedCategory}
+                    <Button 
+                      variant="link" 
+                      size="sm" 
+                      onClick={() => setSelectedCategory(null)}
+                      className="ml-2"
+                    >
+                      Сбросить
+                    </Button>
+                  </p>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground">Найдено: {filteredExecutors.length}</p>
+            </div>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredExecutors.map((executor) => (
+                <Card key={`${executor.executorType}-${executor.id}`} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        {executor.executorType === 'worker' ? (
+                          <div className="text-5xl">{executor.image}</div>
+                        ) : (
+                          <div className="p-4 bg-primary/10 rounded-lg">
+                            <Icon name="Building2" size={32} className="text-primary" />
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <CardTitle className="text-lg">{executor.name}</CardTitle>
+                          <CardDescription>
+                            {executor.executorType === 'worker' ? executor.specialty : executor.type}
+                          </CardDescription>
+                        </div>
+                      </div>
+                      <Badge variant="outline">{executor.executorType === 'worker' ? 'Рабочий' : 'Организация'}</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        <Star className="h-4 w-4 fill-primary text-primary" />
+                        <span className="font-semibold">{executor.rating}</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        ({executor.executorType === 'worker' ? `${executor.reviews} отзывов` : `${executor.workers} сотрудников`})
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-bold text-primary">{executor.price}</span>
+                      <Button>Связаться</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'workers' && (
+          <div className="space-y-6">
+            <div className="flex flex-col gap-4 mb-6">
               <h2 className="text-3xl font-bold">Каталог рабочих</h2>
-              <div className="flex gap-2">
-                <Input placeholder="Поиск по имени..." className="w-64" />
-                <Button variant="outline">Фильтры</Button>
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  variant={selectedCategory === null ? 'default' : 'outline'} 
+                  size="sm"
+                  onClick={() => setSelectedCategory(null)}
+                >
+                  Все категории
+                </Button>
+                {categories.map((cat) => (
+                  <Button 
+                    key={cat.name}
+                    variant={selectedCategory === cat.name ? 'default' : 'outline'} 
+                    size="sm"
+                    onClick={() => setSelectedCategory(cat.name)}
+                  >
+                    {cat.icon} {cat.name}
+                  </Button>
+                ))}
               </div>
             </div>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {workers.map((worker) => (
+              {workers.filter(w => !selectedCategory || w.category === selectedCategory).map((worker) => (
                 <Card key={worker.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-start gap-3">
@@ -277,13 +427,31 @@ const Index = () => {
 
         {activeTab === 'organizations' && (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-4 mb-6">
               <h2 className="text-3xl font-bold">Каталог организаций</h2>
-              <Input placeholder="Поиск организаций..." className="w-64" />
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  variant={selectedCategory === null ? 'default' : 'outline'} 
+                  size="sm"
+                  onClick={() => setSelectedCategory(null)}
+                >
+                  Все категории
+                </Button>
+                {categories.map((cat) => (
+                  <Button 
+                    key={cat.name}
+                    variant={selectedCategory === cat.name ? 'default' : 'outline'} 
+                    size="sm"
+                    onClick={() => setSelectedCategory(cat.name)}
+                  >
+                    {cat.icon} {cat.name}
+                  </Button>
+                ))}
+              </div>
             </div>
             
             <div className="grid md:grid-cols-2 gap-6">
-              {organizations.map((org) => (
+              {organizations.filter(o => !selectedCategory || o.category === selectedCategory).map((org) => (
                 <Card key={org.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-start justify-between">
