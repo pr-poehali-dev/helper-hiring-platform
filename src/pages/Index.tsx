@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Moon, Sun, Search, Star, Users, HelpCircle, FileText } from 'lucide-react';
+import WorkerProfile from './WorkerProfile';
+import OrganizationProfile from './OrganizationProfile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +13,9 @@ import Icon from '@/components/ui/icon';
 const Index = () => {
   const [isDark, setIsDark] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
+  const [userType, setUserType] = useState<'worker' | 'organization' | null>(null);
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [profileData, setProfileData] = useState<any>(null);
 
   useEffect(() => {
     if (isDark) {
@@ -75,7 +80,8 @@ const Index = () => {
     { name: 'Уборка', icon: '🧹' },
     { name: 'Переезды', icon: '📦' },
     { name: 'Ремонт', icon: '🔨' },
-    { name: 'Садовник', icon: '🌱' }
+    { name: 'Садовник', icon: '🌱' },
+    { name: 'Строительство', icon: '🏗️' }
   ];
 
   const faqItems = [
@@ -128,14 +134,25 @@ const Index = () => {
               </button>
             </nav>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsDark(!isDark)}
-              className="rounded-full"
-            >
-              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </Button>
+            <div className="flex items-center gap-2">
+              {isRegistered && (
+                <Button
+                  variant="outline"
+                  onClick={() => setActiveTab('profile')}
+                >
+                  <Icon name="User" className="mr-2 h-4 w-4" />
+                  Мой профиль
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsDark(!isDark)}
+                className="rounded-full"
+              >
+                {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -325,40 +342,86 @@ const Index = () => {
                   <TabsContent value="individual" className="space-y-4 mt-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Ваше имя</label>
-                      <Input placeholder="Иван Иванов" />
+                      <Input 
+                        placeholder="Иван Иванов" 
+                        onChange={(e) => setProfileData({...profileData, name: e.target.value})}
+                      />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Специальность</label>
-                      <Input placeholder="Сантехник, электрик" />
+                      <Input 
+                        placeholder="Сантехник, электрик" 
+                        onChange={(e) => setProfileData({...profileData, specialty: e.target.value})}
+                      />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Телефон</label>
-                      <Input placeholder="+7 (900) 123-45-67" />
+                      <Input 
+                        placeholder="+7 (900) 123-45-67" 
+                        onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
+                      />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Стоимость услуг (руб/час)</label>
-                      <Input type="number" placeholder="2000" />
+                      <Input 
+                        type="number" 
+                        placeholder="2000" 
+                        onChange={(e) => setProfileData({...profileData, price: e.target.value + '₽/час'})}
+                      />
                     </div>
-                    <Button className="w-full" size="lg">Зарегистрироваться</Button>
+                    <Button 
+                      className="w-full" 
+                      size="lg"
+                      onClick={() => {
+                        setUserType('worker');
+                        setIsRegistered(true);
+                        setActiveTab('profile');
+                      }}
+                    >
+                      Зарегистрироваться
+                    </Button>
                   </TabsContent>
                   <TabsContent value="organization" className="space-y-4 mt-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Название организации</label>
-                      <Input placeholder="ООО Мастер" />
+                      <Input 
+                        placeholder="ООО Мастер" 
+                        onChange={(e) => setProfileData({...profileData, name: e.target.value})}
+                      />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Тип услуг</label>
-                      <Input placeholder="Клининг, ремонт" />
+                      <Input 
+                        placeholder="Клининг, ремонт" 
+                        onChange={(e) => setProfileData({...profileData, type: e.target.value})}
+                      />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Количество сотрудников</label>
-                      <Input type="number" placeholder="10" />
+                      <Input 
+                        type="number" 
+                        placeholder="10" 
+                        onChange={(e) => setProfileData({...profileData, workers: parseInt(e.target.value)})}
+                      />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Контактный телефон</label>
-                      <Input placeholder="+7 (900) 123-45-67" />
+                      <Input 
+                        placeholder="+7 (900) 123-45-67" 
+                        onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
+                      />
                     </div>
-                    <Button className="w-full" size="lg">Зарегистрировать организацию</Button>
+                    <Button 
+                      className="w-full" 
+                      size="lg"
+                      onClick={() => {
+                        setUserType('organization');
+                        setIsRegistered(true);
+                        setActiveTab('profile');
+                      }}
+                    >
+                      Зарегистрировать организацию
+                    </Button>
                   </TabsContent>
                 </Tabs>
               </CardContent>
@@ -443,6 +506,22 @@ const Index = () => {
               </CardContent>
             </Card>
           </div>
+        )}
+
+        {activeTab === 'profile' && isRegistered && (
+          <>
+            {userType === 'worker' ? (
+              <WorkerProfile 
+                profileData={profileData} 
+                onBack={() => setActiveTab('home')} 
+              />
+            ) : (
+              <OrganizationProfile 
+                profileData={profileData} 
+                onBack={() => setActiveTab('home')} 
+              />
+            )}
+          </>
         )}
       </main>
 
