@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Moon, Sun, Search, Star, Users, HelpCircle, FileText } from 'lucide-react';
 import WorkerProfile from './WorkerProfile';
 import OrganizationProfile from './OrganizationProfile';
+import ContractSignature, { SignatureData } from '@/components/ContractSignature';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import Icon from '@/components/ui/icon';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 const Index = () => {
   const [isDark, setIsDark] = useState(false);
@@ -20,6 +22,10 @@ const Index = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [sortBy, setSortBy] = useState<'rating' | 'price-asc' | 'price-desc' | null>(null);
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [showContractDialog, setShowContractDialog] = useState(false);
+  const [selectedExecutor, setSelectedExecutor] = useState<any>(null);
+  const [orders, setOrders] = useState<any[]>([]);
 
   useEffect(() => {
     if (isDark) {
@@ -28,6 +34,13 @@ const Index = () => {
       document.documentElement.classList.remove('dark');
     }
   }, [isDark]);
+
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('searchHistory');
+    if (savedHistory) {
+      setSearchHistory(JSON.parse(savedHistory));
+    }
+  }, []);
 
   const workers = [
     {
@@ -144,6 +157,11 @@ const Index = () => {
   ];
 
   const handleSearch = () => {
+    if (searchQuery.trim() && !searchHistory.includes(searchQuery.trim())) {
+      const newHistory = [searchQuery.trim(), ...searchHistory].slice(0, 5);
+      setSearchHistory(newHistory);
+      localStorage.setItem('searchHistory', JSON.stringify(newHistory));
+    }
     setShowSearchResults(true);
     setActiveTab('search');
   };
@@ -152,6 +170,24 @@ const Index = () => {
     setSelectedCategory(categoryName);
     setShowSearchResults(true);
     setActiveTab('search');
+  };
+
+  const handleContactClick = (executor: any) => {
+    setSelectedExecutor(executor);
+    setShowContractDialog(true);
+  };
+
+  const handleContractSign = (signatureData: SignatureData) => {
+    const newOrder = {
+      id: Date.now(),
+      executor: selectedExecutor,
+      contract: signatureData,
+      status: 'active',
+      createdAt: new Date().toISOString()
+    };
+    setOrders([...orders, newOrder]);
+    setShowContractDialog(false);
+    setActiveTab('orders');
   };
 
   const parsePrice = (priceStr: string) => {
@@ -204,6 +240,9 @@ const Index = () => {
               </button>
               <button onClick={() => setActiveTab('organizations')} className={`text-sm font-medium transition-colors hover:text-primary ${activeTab === 'organizations' ? 'text-primary' : 'text-muted-foreground'}`}>
                 Организации
+              </button>
+              <button onClick={() => setActiveTab('orders')} className={`text-sm font-medium transition-colors hover:text-primary ${activeTab === 'orders' ? 'text-primary' : 'text-muted-foreground'}`}>
+                Мои заявки
               </button>
               <button onClick={() => setActiveTab('register')} className={`text-sm font-medium transition-colors hover:text-primary ${activeTab === 'register' ? 'text-primary' : 'text-muted-foreground'}`}>
                 Стать исполнителем
@@ -314,7 +353,7 @@ const Index = () => {
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-lg font-bold text-primary">{worker.price}</span>
-                        <Button>Связаться</Button>
+                        <Button onClick={() => handleContactClick(worker)}>Связаться</Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -406,7 +445,7 @@ const Index = () => {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-lg font-bold text-primary">{executor.price}</span>
-                      <Button>Связаться</Button>
+                      <Button onClick={() => handleContactClick(executor)}>Связаться</Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -487,7 +526,7 @@ const Index = () => {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-lg font-bold text-primary">{worker.price}</span>
-                      <Button>Связаться</Button>
+                      <Button onClick={() => handleContactClick(worker)}>Связаться</Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -571,7 +610,7 @@ const Index = () => {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-lg font-bold text-primary">{org.price}</span>
-                      <Button>Подробнее</Button>
+                      <Button onClick={() => handleContactClick(org)}>Связаться</Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -693,50 +732,71 @@ const Index = () => {
           </div>
         )}
 
-        {activeTab === 'orders' && !isRegistered && (
+        {activeTab === 'orders' && (
           <div className="max-w-4xl mx-auto space-y-6">
-            <h2 className="text-3xl font-bold">Мои заказы</h2>
+            <h2 className="text-3xl font-bold">Мои заявки</h2>
             
-            <Tabs defaultValue="active">
-              <TabsList>
-                <TabsTrigger value="active">Активные</TabsTrigger>
-                <TabsTrigger value="completed">Завершенные</TabsTrigger>
-                <TabsTrigger value="cancelled">Отмененные</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="active" className="space-y-4 mt-6">
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle>Сантехнические работы</CardTitle>
-                        <CardDescription>Александр Петров • 15 декабря 2024</CardDescription>
+            {orders.length === 0 ? (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50 text-muted-foreground" />
+                  <p className="text-muted-foreground">У вас пока нет активных заявок</p>
+                  <Button className="mt-4" onClick={() => setActiveTab('home')}>
+                    Найти исполнителя
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {orders.map((order) => (
+                  <Card key={order.id}>
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle>
+                            {order.executor.executorType === 'worker' 
+                              ? order.executor.specialty 
+                              : order.executor.type}
+                          </CardTitle>
+                          <CardDescription>
+                            {order.executor.name} • {new Date(order.createdAt).toLocaleDateString('ru-RU')}
+                          </CardDescription>
+                        </div>
+                        <Badge variant={order.status === 'active' ? 'default' : 'secondary'}>
+                          {order.status === 'active' ? 'Активна' : 'Завершена'}
+                        </Badge>
                       </div>
-                      <Badge>В процессе</Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Замена смесителя на кухне</p>
-                      <div className="flex items-center justify-between pt-2">
-                        <span className="font-semibold">2500₽</span>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">Отменить</Button>
-                          <Button size="sm">Связаться</Button>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold">Стоимость:</span>
+                          <span className="font-bold text-primary">{order.executor.price}</span>
+                        </div>
+                        
+                        <div className="border-t pt-4 mt-4">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="w-full"
+                            onClick={() => {
+                              const contractText = order.executor.executorType === 'worker'
+                                ? `ДОГОВОР ВОЗМЕЗДНОГО ОКАЗАНИЯ УСЛУГ\n\nг. Москва    ${order.contract.signatureDate}\n\nЗАКАЗЧИК: ${order.contract.clientFullName}\nПаспорт: ${order.contract.clientPassport}\nАдрес: ${order.contract.clientAddress}\n\nИСПОЛНИТЕЛЬ: ${order.contract.executorFullName}\nПаспорт: ${order.contract.executorPassport}\nАдрес: ${order.contract.executorAddress}\n\nУслуга: ${order.executor.specialty}\nСтоимость: ${order.executor.price}\n\nКонтакты Заказчика:\nТелефон: ${order.contract.clientPhone}\nEmail: ${order.contract.clientEmail}\n\nДоговор подписан электронной подписью ${order.contract.signatureDate}`
+                                : `ДОГОВОР НА ОКАЗАНИЕ УСЛУГ\n\nг. Москва    ${order.contract.signatureDate}\n\nЗАКАЗЧИК: ${order.contract.clientFullName}\nПаспорт: ${order.contract.clientPassport}\nАдрес: ${order.contract.clientAddress}\n\nИСПОЛНИТЕЛЬ: ${order.contract.executorFullName}\nИНН: ${order.contract.executorINN}\nАдрес: ${order.contract.executorAddress}\n\nУслуга: ${order.executor.type}\nСтоимость: ${order.executor.price}\n\nКонтакты Заказчика:\nТелефон: ${order.contract.clientPhone}\nEmail: ${order.contract.clientEmail}\n\nДоговор подписан электронной подписью ${order.contract.signatureDate}`;
+                              
+                              alert(contractText);
+                            }}
+                          >
+                            <Icon name="FileText" className="mr-2 h-4 w-4" />
+                            Посмотреть договор
+                          </Button>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="completed">
-                <div className="text-center py-12 text-muted-foreground">
-                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>У вас пока нет завершенных заказов</p>
-                </div>
-              </TabsContent>
-            </Tabs>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -790,6 +850,27 @@ const Index = () => {
           </>
         )}
       </main>
+
+      <Dialog open={showContractDialog} onOpenChange={setShowContractDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Оформление заявки</DialogTitle>
+            <DialogDescription>
+              Для оформления заявки необходимо подписать договор электронной подписью
+            </DialogDescription>
+          </DialogHeader>
+          {selectedExecutor && (
+            <ContractSignature
+              contractType={selectedExecutor.executorType === 'worker' ? 'worker' : 'organization'}
+              executorName={selectedExecutor.name}
+              serviceName={selectedExecutor.executorType === 'worker' ? selectedExecutor.specialty : selectedExecutor.type}
+              price={selectedExecutor.price}
+              onSign={handleContractSign}
+              onCancel={() => setShowContractDialog(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <footer className="border-t mt-16">
         <div className="container mx-auto px-4 py-8">
